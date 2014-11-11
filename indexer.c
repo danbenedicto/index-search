@@ -32,7 +32,7 @@ void trie_destroy(TrieNode *root)
 	free(root);
 }
 
- 
+
 TrieNode *createNode(char letter)
 {
 	TrieNode *newNode = (TrieNode *)malloc(sizeof(TrieNode));
@@ -76,6 +76,19 @@ void read_file(Index *index, FILE *file, char *file_name)
 	}
 
 	finalize_file_occurrences(index, file_name);
+}
+
+/*
+ * Adds the token into the index, and returns a pointer to the last TrieNode
+ * in the index.
+ */
+TrieNode *add_token(Index *index, char *token)
+{
+	TrieNode *curr = index->root;
+	for (int i = 0; token[i] != '\0'; i++) {
+		curr = get_child(curr, tolower(token[i]), 1);
+	}
+	return curr;
 }
 
 void finalize_file_occurrences(Index *index, char *file_name)
@@ -139,7 +152,7 @@ TrieNode *get_child(TrieNode *parent, char letter, int create)
 			return parent->first_child;
 		} else {
 			return NULL;
-		}	
+		}
 	}
 
 	if (parent->first_child->key > letter){
@@ -218,8 +231,70 @@ void fprint_index_helper(FILE *out, TrieNode *root, char *buffer, int index)
 	}
 
 	fprint_index_helper(out, root->first_child, buffer, index + 1);
-	
+
 	buffer[index] = '\0'; /* not really necessary, will get overwritten anyway */
 
 	fprint_index_helper(out, root->next_sibling, buffer, index);
+}
+
+/*
+ * Reads an Index into dynamically allocated memory from a text file. Returns
+ * null if the file is not properly formatted.
+ */
+Index *load_index(FILE *file)
+{
+	Index *index = create_index();
+
+	char token[512];
+
+	while (fscanf(file, "%s ", token) > 0) {
+		if (strcmp(token, "<list>") != 0) {
+			index_destroy(index);
+			return NULL;
+		}
+
+		fscanf(file, "%s ", token);                // this is the actual token
+		TrieNode *node = add_token(index, token);   // put it in the index
+		printf("Token: %s\n", token);
+
+		// get names of files
+		while (1) {
+			int count;
+			int matches = fscanf(file, "%s %d ", token, &count);
+			if (matches < 2) {
+				if (strcmp(token, "</list>") == 0) {
+					break;    // finished all filenames for this token
+				}
+				// this should not happen
+				index_destroy(index);
+				return NULL;
+			}
+			add_occurrence(node, token, count);
+		}
+	}
+
+	return index;
+}
+
+void add_occurrence(TrieNode *node, char *file_name, int count)
+{
+	OccurrenceNode *occ = create_occurrence(file_name, count);
+	OccurrenceNode *curr = node->occurrences;
+
+	if (curr == NULL) {
+		occ->next = curr;
+		node->occurrences = occ;    // insert at the head
+		return;
+	}
+
+	OccurrenceNode *prev;
+
+	// insert at end
+	do {
+		prev = curr;
+		curr = curr->next;
+	} while (curr != NULL);
+
+	prev->next = occ;
+	occ->next = curr;
 }

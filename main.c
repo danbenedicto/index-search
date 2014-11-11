@@ -19,23 +19,29 @@ int main (int argc, char const *argv[]) {
 	//Index *index = load_index(inverted);
 
 	char query[256];
+	scanf("%s", query);
 
-	while (strcmp(&query[0],"q") != 0){
-		memset(&query[256], 0, sizeof(query));
+	while (1){
+		memset(&query[0], 0, sizeof(query));
 		scanf("%s", query);
 		char* token = strtok(query, " ");
 		if (strcmp(token, "sa") == 0){
-			while (strcmp(token, NULL) != 0){
-				token = strtok(query, " ");
+			while (stoken != NULL){
+				token = strtok(NULL, " ");
 				/* insert 'and' function here */
+				break;
 			}
 		} else if (strcmp(token, "so") == 0){
-			while (strcmp(token, NULL) != 0){
-				token = strtok(query, " ");
+			while (token != NULL){
+				token = strtok(NULL, " ");
 				/* insert 'or' function here */
+				break;
 			}
+		} else if (strcmp(&query[0],"q") == 0){
+			break;
 		} else {
 			printf("error - command not found");
+			break;
 		}
 	}
 

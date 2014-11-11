@@ -26,7 +26,7 @@ int main (int argc, char const *argv[]) {
 		scanf("%s", query);
 		char* token = strtok(query, " ");
 		if (strcmp(token, "sa") == 0){
-			while (stoken != NULL){
+			while (token != NULL){
 				token = strtok(NULL, " ");
 				/* insert 'and' function here */
 				break;
